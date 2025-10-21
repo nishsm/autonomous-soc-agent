@@ -1,0 +1,5 @@
+If an account shows signs of compromise:
+1. Immediately disable the account.
+2. Reset credentials.
+3. Investigate recent activity logs.
+4. Notify the affected user.
