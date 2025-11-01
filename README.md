@@ -1,169 +1,153 @@
 # Autonomous SOC Agentic System
 
-A modular, multi-agent system that simulates a Security Operations Center (SOC) workflow.  
-This system uses:
+A modular, multi-agent Python system simulating Security Operations Center (SOC) workflows. Designed for educational and research scenarios, it integrates anomaly detection, Recovery Planning, and Retrieval-Augmented Generation (RAG) using local LLMs and knowledge bases.
 
-- **LangGraph** to manage state transitions between agents
-- **Ollama** for local embeddings and LLM generation
-- **FAISS** for RAG-style retrieval from a local knowledge base
-- **Pandas & Scikit-Learn** for anomaly detection
+---
+
+## Features
+
+- **Agent-based architecture** modeling workflow transitions in an SOC.
+- **SIEM Observer agent**: Detects anomalous behaviors in logs using Isolation Forests (scikit-learn).
+- **Recovery Planner agent**: Generates context-aware recovery plans with local LLM (Ollama) and FAISS-powered RAG.
+- **Knowledge base integration**: Uses local documents, embedded via LangChain/Ollama, for fast semantic retrieval.
+- **Modular codebase** for rapid extension, including real log integration and multi-agent communication.
 
 ---
 
 ## Project Structure
 
-autonomous-soc-agentic-system/
+```
+initial-langraph/
 │
-├─ agents/
-│ ├─ siem_observer.py # Collects logs & detects anomalies
-│ └─ recovery_planner.py # Generates recovery plans using Ollama + FAISS
+├── agents/
+│   ├── recovery_planner.py         # Generates recovery plans using Ollama LLM and FAISS
+│   └── siem_observer.py            # Collects logs and detects anomalies
 │
-├─ knowledge_base/
-│ └─ create_vector_store.py # Builds FAISS index with Ollama embeddings
+├── knowledge_base/
+│   ├── faiss_index/
+│   │   ├── index.faiss
+│   │   └── index.pkl
+│   └── recovery_docs/
+│       ├── account_recovery.txt
+│       ├── network_threats.md
+│       ├── build_index.py          # RAG vector store builder
+│       └── create_vector_store.py  # Automates FAISS index creation with Ollama embeddings
 │
-├─ state.py # Defines SOCState
-├─ main.py # Runs the full agent pipeline
-└─ README.md
-
+├── models/
+│   └── anomaly_detector.py
+│
+├── README.md
+├── main.py                         # Coordinates the pipeline
+└── state.py                        # Defines agent state and transitions
+```
 
 ---
 
 ## Requirements
 
-- Python 3.9+
-- [Ollama](https://ollama.com/download) installed and running
-- Python packages:
+- Python 3.9+  
+- [Ollama](https://ollama.com/) running locally (`ollama serve`), with your preferred model (e.g., llama3) installed.  
+- Pip packages:
+  ```bash
+  pip install langgraph langchain langchain-ollama langchain-community pandas scikit-learn faiss-cpu
+  ```
 
+_Note: For LangChain v0.2+, use `langchain_community` for embeddings and vectorstores._
+
+---
+
+## Installation & Setup
+
+### 1. Clone repository
+```bash
+git clone https://github.com/serenagomez1304/autonomous-soc-agentic-system.git
+cd autonomous-soc-agentic-system
+```
+
+### 2. Install dependencies
 ```bash
 pip install langgraph langchain langchain-ollama langchain-community pandas scikit-learn faiss-cpu
 ```
 
-⚠️ Note: langchain imports have changed in v0.2+, so we now use langchain_community for FAISS and embeddings.
+### 3. Start Ollama daemon and ensure model
+```bash
+ollama serve
+ollama list   # Confirm your model (e.g., llama3) is available
+```
 
-Setup & Running
+### 4. Build and initialize the FAISS vector store
+```bash
+python3 knowledge_base/create_vector_store.py
+```
+- Embeds your knowledge base using Ollama and constructs the FAISS index locally.  
+- Indices are saved at: `knowledge_base/faiss_index`  
 
-1. Start Ollama Daemon
-    ```
-    ollama serve
-    ```
-    Ensure your local model is installed (llama3 in this project). You can check with:
-    ```
-    ollama list
-    ```
+### 5. Run the main pipeline
+```bash
+python3 main.py
+```
+- The SIEM Observer agent simulates log analysis and flags suspicious activity.  
+- The Recovery Planner agent uses your local knowledge base and LLM to propose detailed recovery steps.  
+- Final output prints structured recovery plans to the console.  
 
-2. Create FAISS Vector Store
-    ```
-    python3 knowledge_base/create_vector_store.py
-    ```
+---
 
-    * Stores local FAISS index at knowledge_base/faiss_index
+## Troubleshooting & Notes
 
-    * Uses Ollama embeddings for document vectors
+- **Ollama connection errors**: Ensure `ollama serve` is running before script execution.  
+- **FAISS deserialization issues**: Set `allow_dangerous_deserialization=True` when loading local indices.  
+- **LangChain API updates**: Use `.invoke()` instead of `.run()`. Replace `OpenAIEmbeddings` with `OllamaEmbeddings`.  
+- **SSL warnings on macOS**: LibreSSL/urllib3 warnings are ignorable unless connectivity fails.  
 
-    * Debugging notes:
+---
 
-        - If you previously used OpenAI embeddings, switch to Ollama.
+## Key Components
 
-        - Avoid pickling errors by saving FAISS locally using save_local().
+| Script | Purpose |
+|--------|----------|
+| `agents/siem_observer.py` | Log monitoring and anomaly detection with Isolation Forest |
+| `agents/recovery_planner.py` | Generates recovery steps using FAISS+Ollama RAG pipeline |
+| `main.py` | Manages end-to-end agent workflow, outputting structured plans |
+| `knowledge_base/create_vector_store.py` | Indexes docs (txt/md) using Ollama embeddings for retrieval |
+| `state.py` | Defines SOC state and agent transitions |
+| `models/anomaly_detector.py` | Additional anomaly detection utilities (optional/expandable) |
 
-        - If you see AttributeError: 'function' object has no attribute 'embed_documents', ensure you’re using OllamaEmbeddings and not a function.
+---
 
-3. Run Main Pipeline
-    ```
-    python3 main.py
-    ```
-    Steps performed:
+## Example Run
 
-    * SIEM Observer: detects suspicious logs with an Isolation Forest
+```bash
+python3 main.py
+```
 
-    * Recovery Planner: generates recovery plans using RAG (FAISS + Ollama LLM)
+**Output Example:**  
+```
+SIEM Observer: Detected suspicious login (user: eve, login_attempts: 10, files_accessed: 9)
+Recovery Planner: Generated plan for eve
+Plan: [Step-by-step recovery actions based on local knowledge base...]
+Final state: all suspicious events handled and recovery plans output.
+```
 
-    * Final State: prints plans in a structured format
+---
 
-    ```
-    🟡 [Observer] Suspicious logs: [{'user': 'eve', 'login_attempts': 10, 'files_accessed': 9, 'is_suspicious': True}]
-    🟢 [Planner] Recovery plans: [{'user': 'eve', 'plan': '...plan text...'}]
+## Extending & Roadmap
 
-    ✅ FINAL STATE:
-    {'plans': [{'user': 'eve', 'plan': '...plan text...'}]}
-    ```
+- Integrate real log ingestion for SIEM observer.  
+- Improve RAG queries with multi-step reasoning and better context assembly.  
+- Add multi-agent logging, dashboards, or notifications for production-style SOC simulation.  
+- Expand recovery knowledge base with more threat/incident response scenarios.  
 
-## Key Code Updates
+---
 
-1. Recovery Planner (agents/recovery_planner.py)
+## Credits & References
 
-    * Switched to Ollama LLM and OllamaEmbeddings
+- [Ollama Docs](https://ollama.com)  
+- [LangChain Documentation](https://python.langchain.com)  
+- [FAISS Documentation](https://github.com/facebookresearch/faiss)  
+- Scikit-Learn & Pandas for data analysis.  
 
-    * Loads FAISS index safely with:
-        ```
-        vectorstore = FAISS.load_local(
-            "knowledge_base/faiss_index",
-            embeddings,
-            allow_dangerous_deserialization=True
-        )
-        ```
-    * RAG QA replaced .run() with .invoke() to avoid deprecation warnings:
-        ```
-        response = qa.invoke(query)
-        ```
-    
-2. SIEM Observer (agents/siem_observer.py)
-
-    * Detects suspicious logins with IsolationForest
-    * Returns suspicious events for the planner
-
-3. FAISS Vector Store (knowledge_base/create_vector_store.py)
-
-    * Creates FAISS index locally
-
-    * Uses OllamaEmbeddings to embed sample documents
-
-    * Avoids pickling _thread.RLock errors by saving FAISS via save_local() instead of pickling
-
-## Debugging Notes
-
-1. SSL warning (LibreSSL vs OpenSSL):
-    ```
-    NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'
-    ```
-    * Can be ignored; it doesn’t prevent the code from running on macOS
-
-2. Ollama connection error:
-    ```
-    ConnectionError: Failed to connect to Ollama.
-    ```
-    * Ensure ollama serve is running
-    * Verify your model exists with ollama list
-
-3. FAISS deserialization error:
-    ```
-    allow_dangerous_deserialization=True
-    ```
-    * Must be set for locally created FAISS indices
-
-4. LangChain deprecation warnings:
-    * .run() → .invoke()
-    * langchain.vectorstores → langchain_community.vectorstores
-    * OpenAIEmbeddings → OllamaEmbeddings
-
-
-## Next Steps / Improvements:
-
-* Auto-create FAISS vector store if missing in main.py
-
-* Expand SIEM observer to handle real log ingestion
-
-* Improve RAG queries with additional context or multi-step reasoning
-
-* Add multi-agent logging & monitoring for production SOC simulation
-
+---
 
 ## Authors
 
-Nishanth, Serena
-
-## References
-
-* [Ollama Docs](https://ollama.com/docs)
-* [LangChain Docs](https://python.langchain.com/en/latest/)
-* [FAISS Documentation](https://github.com/facebookresearch/faiss)
+Project by **Nishanth** and **Serena**
