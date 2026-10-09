@@ -17,7 +17,7 @@ A modular, multi-agent Python system simulating Security Operations Center (SOC)
 ## Project Structure
 
 ```
-initial-langraph/
+autonomous-soc-agent/
 │
 ├── agents/
 │   ├── recovery_planner.py         # Generates recovery plans using Ollama LLM and FAISS
@@ -60,8 +60,8 @@ _Note: For LangChain v0.2+, use `langchain_community` for embeddings and vectors
 
 ### 1. Clone repository
 ```bash
-git clone https://github.com/serenagomez1304/autonomous-soc-agentic-system.git
-cd autonomous-soc-agentic-system
+git clone https://github.com/nishsm/autonomous-soc-agent.git
+cd autonomous-soc-agent
 ```
 
 ### 2. Install dependencies
@@ -150,4 +150,4 @@ Final state: all suspicious events handled and recovery plans output.
 
 ## Authors
 
-Project by **Nishanth** and **Serena**
+Built by **Nishanth Madthila**. Thanks to **Serena Gomez**, who started the original repo.
